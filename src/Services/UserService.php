@@ -77,4 +77,8 @@ class UserService {
         }
         return $user;
     }
+
+    public function getAll(): array {
+        return $this->userRepository->findAll();
+    }
 }

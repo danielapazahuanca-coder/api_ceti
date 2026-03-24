@@ -1,5 +1,5 @@
 <?php
-namespace App\Repositories;
+namespace App\Repositories\Interfaces;
 
 use App\Database\Database;
 use App\Models\User;
@@ -77,5 +77,11 @@ class UserRepository implements UserRepositoryInterface {
     public function delete(int $id): bool {
         $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
         return $stmt->execute([':id' => $id]);
+    }
+
+    public function findAll(): array {
+        $stmt = $this->db->query("SELECT * FROM users");
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_map(fn($row) => new User(...$row), $data);
     }
 }

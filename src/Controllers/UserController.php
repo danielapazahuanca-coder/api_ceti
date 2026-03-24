@@ -102,4 +102,23 @@ class UserController {
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
     }
+
+    public function index(): array {
+        try {
+            $users = $this->userService->getAll();
+
+            return [
+                'status' => 'success',
+                'data' => array_map(fn($user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'created_at' => $user->created_at
+                ], $users)
+            ];
+
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
 }

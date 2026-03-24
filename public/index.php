@@ -1,6 +1,5 @@
 <?php
-//require_once __DIR__ . '/../vendor/autoload.php';
-
+// Autoloader para cargar las clases automáticamente
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
     $base_dir = __DIR__ . '/../src/';
@@ -11,12 +10,16 @@ spl_autoload_register(function ($class) {
     if (file_exists($file)) require $file;
 });
 
+// Importamos los Controladores, Repositorios y Servicios
 use App\Controllers\UserController;
-use App\Repositories\UserRepository;
+use App\Repositories\Interfaces\UserRepository;
 use App\Services\UserService;
 
-header('Content-Type: application/json');
+use App\Controllers\ActivoController;
+use App\Repositories\Interfaces\ActivoRepository;
+use App\Services\ActivoService;
 
+header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
@@ -26,9 +29,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// --- INSTANCIAS DE USUARIOS ---
 $userRepository = new UserRepository();
 $userService = new UserService($userRepository);
 $userController = new UserController($userService);
+
+// --- INSTANCIAS DE ACTIVOS ---
+$activoRepository = new ActivoRepository();
+$activoService = new ActivoService($activoRepository);
+$activoController = new ActivoController($activoService);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUri = $_SERVER['REQUEST_URI'];
@@ -36,9 +45,14 @@ $requestUri = $_SERVER['REQUEST_URI'];
 $path = parse_url($requestUri, PHP_URL_PATH);
 $segments = explode('/', trim($path, '/'));
 
+// Detectar qué recurso se está pidiendo (users o activos)
+// Ejemplo: si la URL es /api_ceti/public/index.php/activos -> el recurso es 'activos'
+$resource = $segments[count($segments) - 1];
 $id = null;
-if (count($segments) > 1 && is_numeric(end($segments))) {
-    $id = (int) end($segments);
+
+if (is_numeric($resource)) {
+    $id = (int) $resource;
+    $resource = $segments[count($segments) - 2];
 }
 
 $requestData = [];
@@ -48,43 +62,42 @@ if ($method === 'POST' || $method === 'PUT') {
 }
 
 try {
-    switch ($method) {
-        case 'GET':
-            if ($id) {
-                // GET /users/1 - Obtener usuario específico
-                $response = $userController->show($id);
-            } else {
-                // GET /users - Listar todos (opcional)
-                $response = ['status' => 'error', 'message' => 'Método no implementado'];
-            }
-            break;
-
-        case 'POST':
-            // POST /users - Crear usuario
-            $response = $userController->store($requestData);
-            break;
-
-        case 'PUT':
-            if ($id) {
-                // PUT /users/1 - Actualizar usuario
-                $response = $userController->update($requestData, $id);
-            } else {
-                $response = ['status' => 'error', 'message' => 'ID requerido'];
-            }
-            break;
-
-        case 'DELETE':
-            if ($id) {
-                // DELETE /users/1 - Eliminar usuario
-                $response = $userController->delete($id);
-            } else {
-                $response = ['status' => 'error', 'message' => 'ID requerido'];
-            }
-            break;
-
-        default:
-            $response = ['status' => 'error', 'message' => 'Método no permitido'];
-            http_response_code(405);
+    // RUTAS PARA USUARIOS
+    if ($resource === 'users') {
+        switch ($method) {
+            case 'GET':
+                $response = $id ? $userController->show($id) : $userController->index();
+                break;
+            case 'POST':
+                $response = $userController->store($requestData);
+                break;
+            case 'PUT':
+                $response = $id ? $userController->update($requestData, $id) : ['status' => 'error', 'message' => 'ID requerido'];
+                break;
+            case 'DELETE':
+                $response = $id ? $userController->delete($id) : ['status' => 'error', 'message' => 'ID requerido'];
+                break;
+        }
+    } 
+    // RUTAS PARA ACTIVOS (MUEBLES)
+    elseif ($resource === 'activos') {
+        switch ($method) {
+            case 'GET':
+                $response = $id ? $activoController->show($id) : $activoController->index();
+                break;
+            case 'POST':
+                $response = $activoController->store($requestData);
+                break;
+            case 'PUT':
+                $response = $id ? $activoController->update($requestData, $id) : ['status' => 'error', 'message' => 'ID requerido'];
+                break;
+            case 'DELETE':
+                $response = $id ? $activoController->delete($id) : ['status' => 'error', 'message' => 'ID requerido'];
+                break;
+        }
+    } else {
+        $response = ['status' => 'error', 'message' => 'Recurso no encontrado: ' . $resource];
+        http_response_code(404);
     }
 } catch (Exception $e) {
     $response = ['status' => 'error', 'message' => $e->getMessage()];

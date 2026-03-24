@@ -8,5 +8,6 @@ interface UserRepositoryInterface {
     public function findByEmail(string $email): ?User;
     public function findById(int $id): ?User;      
     public function update(User $user): User;      
-    public function delete(int $id): bool;        
+    public function delete(int $id): bool;
+    public function findAll(): array;
 }
