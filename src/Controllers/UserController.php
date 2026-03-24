@@ -3,6 +3,8 @@ namespace App\Controllers;
 
 use App\DTOs\CreateUserDTO;
 use App\Services\UserService;
+use App\DTOs\UpdateUserDTO;
+use App\DTOs\DeleteUserDTO;
 use Exception;
 
 class UserController {
