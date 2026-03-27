@@ -47,7 +47,7 @@ class ActivoRepository implements ActivoRepositoryInterface {
             ':resp'      => $activo->responsable,
             ':foto'      => $activo->foto_path,
             ':obs'       => $activo->observaciones,
-            ':fecha_reg' => $activo->fecha_registro // Captura el valor manual del modelo
+            ':fecha_reg' => $activo->fecha_registro 
         ]);
 
         $activo->id = (int) $this->db->lastInsertId();
@@ -59,7 +59,6 @@ class ActivoRepository implements ActivoRepositoryInterface {
         $stmt->execute([':id' => $id]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // El operador (...) reparte los datos del array en el constructor del Modelo
         return $data ? new Activo(...$data) : null;
     }
 
@@ -69,12 +68,38 @@ class ActivoRepository implements ActivoRepositoryInterface {
     }
 
     public function update(Activo $activo): Activo {
-        // Se implementará en la Fase 3 según cronograma
+        $sql = "UPDATE activos SET
+        nombre = :nombre,
+        codigo_activo = :codigo,
+        estado_id = :estado,
+        ubicacion = :ubicacion,
+        precio_compra = :precio,
+        responsable = resp,
+        observaciones = :obs,
+        WHERE id = :id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            ':nombre' => $activo->nombre,
+            ':codigo' => $activo->codigo_activo,
+            ':estado' => $activo->estado_id,
+            ':ubicacion' => $activo->ubicacion,
+            ':precio' => $activo->precio_compra,
+            ':resp' => $activo->responsable,
+            ':obs' => $activo->observaciones,
+            ':id' => $activo->id
+        ]);
         return $activo;
     }
 
     public function delete(int $id): bool {
         $stmt = $this->db->prepare("DELETE FROM activos WHERE id = :id");
         return $stmt->execute([':id' => $id]);
+    }
+    public function findByCodigo(string $codigo): ?Activo {
+        $stmt = $this->db->prepare("SELECT * FROM activos WHERE codigo_activo = :codigo");
+        $stmt->execute([':codigo' => $codigo]);
+        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $data ? new Activo(...$data) : null;
     }
 }

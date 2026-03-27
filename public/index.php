@@ -1,5 +1,8 @@
 <?php
 //require_once __DIR__ . '/../vendor/autoload.php';
+use App\Controllers\UserController;
+use App\Repositories\UserRepository;
+use App\Services\UserService;
 
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
@@ -10,10 +13,6 @@ spl_autoload_register(function ($class) {
     $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
     if (file_exists($file)) require $file;
 });
-
-use App\Controllers\UserController;
-use App\Repositories\UserRepository;
-use App\Services\UserService;
 
 header('Content-Type: application/json');
 
