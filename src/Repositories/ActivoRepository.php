@@ -74,7 +74,7 @@ class ActivoRepository implements ActivoRepositoryInterface {
         estado_id = :estado,
         ubicacion = :ubicacion,
         precio_compra = :precio,
-        responsable = resp,
+        responsable = :resp,
         observaciones = :obs,
         WHERE id = :id";
 
