@@ -57,14 +57,43 @@ class ActivoRepository implements ActivoRepositoryInterface {
     public function findById(int $id): ?Activo {
         $stmt = $this->db->prepare("SELECT * FROM activos WHERE id = :id");
         $stmt->execute([':id' => $id]);
-        $data = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        return $data ? new Activo(...$data) : null;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+        if (!$row) return null;
+
+        return new Activo(
+            id:             (int)$row['id'],
+            nombre:         $row['nombre'],
+            codigo_activo:  $row['codigo_activo'],
+            estado_id:      (int)$row['estado_id'],
+            ubicacion:      $row['ubicacion'],
+            precio_compra:  (float)$row['precio_compra'],
+            responsable:    $row['responsable'],
+            foto_path:      $row['foto_path'],
+            observaciones:  $row['observaciones'],
+            fecha_registro: $row['fecha_registro']
+        );
     }
 
     public function findAll(): array {
         $stmt = $this->db->query("SELECT * FROM activos");
-        return $stmt->fetchAll(PDO::FETCH_CLASS, Activo::class);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC); // Traemos como array simple
+        $activos = [];
+        foreach ($data as $row) {
+            $activos[] = new Activo(
+                id:             (int)$row['id'],
+                nombre:         $row['nombre'],
+                codigo_activo:  $row['codigo_activo'],
+                estado_id:      (int)$row['estado_id'],
+                ubicacion:      $row['ubicacion'],
+                precio_compra:  (float)$row['precio_compra'],
+                responsable:    $row['responsable'],
+                foto_path:      $row['foto_path'],
+                observaciones:  $row['observaciones'],
+                fecha_registro: $row['fecha_registro']
+            );
+        }
+        return $activos;
     }
 
     public function update(Activo $activo): Activo {
@@ -75,7 +104,7 @@ class ActivoRepository implements ActivoRepositoryInterface {
         ubicacion = :ubicacion,
         precio_compra = :precio,
         responsable = :resp,
-        observaciones = :obs,
+        observaciones = :obs
         WHERE id = :id";
 
         $stmt = $this->db->prepare($sql);
