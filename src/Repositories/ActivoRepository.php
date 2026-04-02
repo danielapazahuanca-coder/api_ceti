@@ -75,9 +75,24 @@ class ActivoRepository implements ActivoRepositoryInterface {
         );
     }
 
-    public function findAll(): array {
-        $stmt = $this->db->query("SELECT * FROM activos");
-        $data = $stmt->fetchAll(PDO::FETCH_ASSOC); // Traemos como array simple
+    public function findAll(?string $search = null, ?string $ubicacion = null): array {
+        $sql = "SELECT * FROM activos WHERE 1=1";
+        $params = [];
+
+        if ($search) {
+            $sql .= " AND (nombre LIKE :search OR codigo_activo LIKE :search)";
+            $params[':search'] = "%$search%";
+        }
+
+        if ($ubicacion && $ubicacion !== '') {
+            $sql .= " AND ubicacion = :ubicacion";
+            $params[':ubicacion'] = $ubicacion;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
         $activos = [];
         foreach ($data as $row) {
             $activos[] = new Activo(
@@ -125,6 +140,7 @@ class ActivoRepository implements ActivoRepositoryInterface {
         $stmt = $this->db->prepare("DELETE FROM activos WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
+
     public function findByCodigo(string $codigo): ?Activo {
         $stmt = $this->db->prepare("SELECT * FROM activos WHERE codigo_activo = :codigo");
         $stmt->execute([':codigo' => $codigo]);

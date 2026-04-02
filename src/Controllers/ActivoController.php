@@ -10,9 +10,6 @@ class ActivoController {
         private ActivoService $activoService
     ) {}
 
-    /**
-     * guardar un nuevo activo POST
-     */
     public function store(array $data): array {
         try {
             $dto = new CreateActivoDTO(
@@ -39,12 +36,12 @@ class ActivoController {
         }
     }
 
-    /**
-     * listar todos GET
-     */
     public function index(): array {
         try {
-            $activos = $this->activoService->listarTodo();
+            $search = $_GET['buscar'] ?? null;
+            $ubicacion = $_GET['ubicacion'] ?? null;
+
+            $activos = $this->activoService->listarTodo($search, $ubicacion);
             return [
                 'status' => 'success',
                 'data'   => $activos
@@ -54,16 +51,11 @@ class ActivoController {
         }
     }
 
-    /**
-     * actualizar PUT
-     */
     public function update(array $data, int $id): array {
         try {
-            // Buscamos si existe
             $activoExistente = $this->activoService->obtenerPorId($id);
             
             if (!$activoExistente) {
-                // Aquí te sugiero poner el ID en el mensaje para que sepas qué está buscando PHP
                 return ['status' => 'error', 'message' => "Activo con ID $id no encontrado"];
             }
 
@@ -79,9 +71,6 @@ class ActivoController {
         }
     }
 
-    /**
-     * eliminar DELETE
-     */
     public function destroy(int $id): array {
         try {
             $this->activoService->eliminar($id);

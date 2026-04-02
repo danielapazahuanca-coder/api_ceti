@@ -45,8 +45,8 @@ class ActivoService {
         return $this->repository->save($nuevoActivo);
     }
 
-    public function listarTodo(): array {
-        return $this->repository->findAll();
+    public function listarTodo(?string $search = null, ?string $ubicacion = null): array {
+        return $this->repository->findAll($search, $ubicacion);
     }
     
     public function actualizar(int $id, array $data): Activo {
