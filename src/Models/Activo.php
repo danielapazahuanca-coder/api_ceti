@@ -12,6 +12,7 @@ class Activo {
         public ?string $responsable = null,
         public ?string $foto_path = null,
         public ?string $observaciones = null,
-        public ?string $fecha_registro = null
+        public ?string $fecha_registro = null,
+        public int $activo_sistema = 1
     ) {}
 }
