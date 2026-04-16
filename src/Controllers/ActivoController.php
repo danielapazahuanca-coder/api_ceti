@@ -18,7 +18,26 @@ class ActivoController {
         } catch (Exception $e) { return ['status' => 'error', 'message' => $e->getMessage()]; }
     }
 
-    public function store(array $data): array { /* Sin cambios */ }
+    public function store(array $data): array {
+        try {
+            $dto = new CreateActivoDTO(
+                nombre: $data['nombre'],
+                codigo_activo: $data['codigo_activo'],
+                estado_id: (int)$data['estado_id'],
+                ubicacion: $data['ubicacion'],
+                precio_compra: (float)$data['precio_compra'],
+                responsable: $data['responsable'],
+                fecha_registro: $data['fecha_registro'] ?? date('Y-m-d'),
+                foto_path: $data['foto_path'] ?? null,
+                observaciones: $data['observaciones'] ?? null
+            );
+
+            $activo = $this->activoService->registrar($dto);
+            return ['status' => 'success', 'message' => 'Activo guardado', 'data' => $activo];
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
 
     public function update(array $data, int $id): array {
         try {
