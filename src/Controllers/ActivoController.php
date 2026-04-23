@@ -28,6 +28,7 @@ class ActivoController {
                 precio_compra: (float)$data['precio_compra'],
                 responsable: $data['responsable'],
                 fecha_registro: $data['fecha_registro'] ?? date('Y-m-d'),
+                fecha_compra: $data['fecha_compra'] ?? null, // NUEVO
                 foto_path: $data['foto_path'] ?? null,
                 observaciones: $data['observaciones'] ?? null
             );

@@ -14,8 +14,8 @@ class ActivoRepository implements ActivoRepositoryInterface {
     }
 
     public function save(Activo $activo): Activo {
-        $sql = "INSERT INTO activos (nombre, codigo_activo, estado_id, ubicacion, precio_compra, responsable, foto_path, observaciones, fecha_registro, activo_sistema) 
-                VALUES (:nombre, :codigo, :estado, :ubicacion, :precio, :resp, :foto, :obs, :fecha_reg, :activo_sis)";
+        $sql = "INSERT INTO activos (nombre, codigo_activo, estado_id, ubicacion, precio_compra, responsable, foto_path, observaciones, fecha_registro, fecha_compra, activo_sistema) 
+                VALUES (:nombre, :codigo, :estado, :ubicacion, :precio, :resp, :foto, :obs, :fecha_reg, :fecha_compra, :activo_sis)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             ':nombre' => $activo->nombre,
@@ -27,6 +27,7 @@ class ActivoRepository implements ActivoRepositoryInterface {
             ':foto' => $activo->foto_path,
             ':obs' => $activo->observaciones,
             ':fecha_reg' => $activo->fecha_registro,
+            ':fecha_compra' => $activo->fecha_compra, // NUEVO
             ':activo_sis' => $activo->activo_sistema
         ]);
         $activo->id = (int) $this->db->lastInsertId();
@@ -38,7 +39,20 @@ class ActivoRepository implements ActivoRepositoryInterface {
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row) return null;
-        return new Activo(id: (int)$row['id'], nombre: $row['nombre'], codigo_activo: $row['codigo_activo'], estado_id: (int)$row['estado_id'], ubicacion: $row['ubicacion'], precio_compra: (float)$row['precio_compra'], responsable: $row['responsable'], foto_path: $row['foto_path'], observaciones: $row['observaciones'], fecha_registro: $row['fecha_registro'], activo_sistema: (int)$row['activo_sistema']);
+        return new Activo(
+            id: (int)$row['id'], 
+            nombre: $row['nombre'], 
+            codigo_activo: $row['codigo_activo'], 
+            estado_id: (int)$row['estado_id'], 
+            ubicacion: $row['ubicacion'], 
+            precio_compra: (float)$row['precio_compra'], 
+            responsable: $row['responsable'], 
+            foto_path: $row['foto_path'], 
+            observaciones: $row['observaciones'], 
+            fecha_registro: $row['fecha_registro'],
+            fecha_compra: $row['fecha_compra'], // NUEVO
+            activo_sistema: (int)$row['activo_sistema']
+        );
     }
 
     public function findAll(?string $search = null, ?string $ubicacion = null, int $ver_sistema = 1): array {
@@ -59,16 +73,48 @@ class ActivoRepository implements ActivoRepositoryInterface {
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $activos = [];
         foreach ($data as $row) {
-            $activos[] = new Activo(id: (int)$row['id'], nombre: $row['nombre'], codigo_activo: $row['codigo_activo'], estado_id: (int)$row['estado_id'], ubicacion: $row['ubicacion'], precio_compra: (float)$row['precio_compra'], responsable: $row['responsable'], foto_path: $row['foto_path'], observaciones: $row['observaciones'], fecha_registro: $row['fecha_registro'], activo_sistema: (int)$row['activo_sistema']);
+            $activos[] = new Activo(
+                id: (int)$row['id'], 
+                nombre: $row['nombre'], 
+                codigo_activo: $row['codigo_activo'], 
+                estado_id: (int)$row['estado_id'], 
+                ubicacion: $row['ubicacion'], 
+                precio_compra: (float)$row['precio_compra'], 
+                responsable: $row['responsable'], 
+                foto_path: $row['foto_path'], 
+                observaciones: $row['observaciones'], 
+                fecha_registro: $row['fecha_registro'],
+                fecha_compra: $row['fecha_compra'], // NUEVO
+                activo_sistema: (int)$row['activo_sistema']
+            );
         }
         return $activos;
     }
 
     public function update(Activo $activo): Activo {
-        $sql = "UPDATE activos SET nombre = :nombre, codigo_activo = :codigo, estado_id = :estado, ubicacion = :ubicacion, precio_compra = :precio, responsable = :resp, observaciones = :obs, activo_sistema = :activo_sis WHERE id = :id";
+        $sql = "UPDATE activos SET 
+                nombre = :nombre, 
+                codigo_activo = :codigo, 
+                estado_id = :estado, 
+                ubicacion = :ubicacion, 
+                precio_compra = :precio, 
+                responsable = :resp, 
+                observaciones = :obs, 
+                fecha_compra = :fecha_compra, -- NUEVO
+                activo_sistema = :activo_sis 
+                WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
-            ':nombre' => $activo->nombre, ':codigo' => $activo->codigo_activo, ':estado' => $activo->estado_id, ':ubicacion' => $activo->ubicacion, ':precio' => $activo->precio_compra, ':resp' => $activo->responsable, ':obs' => $activo->observaciones, ':activo_sis' => $activo->activo_sistema, ':id' => $activo->id
+            ':nombre' => $activo->nombre, 
+            ':codigo' => $activo->codigo_activo, 
+            ':estado' => $activo->estado_id, 
+            ':ubicacion' => $activo->ubicacion, 
+            ':precio' => $activo->precio_compra, 
+            ':resp' => $activo->responsable, 
+            ':obs' => $activo->observaciones, 
+            ':fecha_compra' => $activo->fecha_compra, // NUEVO
+            ':activo_sis' => $activo->activo_sistema, 
+            ':id' => $activo->id
         ]);
         return $activo;
     }
@@ -83,6 +129,19 @@ class ActivoRepository implements ActivoRepositoryInterface {
         $stmt->execute([':codigo' => $codigo]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row) return null;
-        return new Activo(id: (int)$row['id'], nombre: $row['nombre'], codigo_activo: $row['codigo_activo'], estado_id: (int)$row['estado_id'], ubicacion: $row['ubicacion'], precio_compra: (float)$row['precio_compra'], responsable: $row['responsable'], foto_path: $row['foto_path'], observaciones: $row['observaciones'], fecha_registro: $row['fecha_registro'], activo_sistema: (int)$row['activo_sistema']);
+        return new Activo(
+            id: (int)$row['id'], 
+            nombre: $row['nombre'], 
+            codigo_activo: $row['codigo_activo'], 
+            estado_id: (int)$row['estado_id'], 
+            ubicacion: $row['ubicacion'], 
+            precio_compra: (float)$row['precio_compra'], 
+            responsable: $row['responsable'], 
+            foto_path: $row['foto_path'], 
+            observaciones: $row['observaciones'], 
+            fecha_registro: $row['fecha_registro'],
+            fecha_compra: $row['fecha_compra'], // NUEVO
+            activo_sistema: (int)$row['activo_sistema']
+        );
     }
 }

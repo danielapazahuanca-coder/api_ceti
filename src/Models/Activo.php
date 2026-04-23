@@ -13,6 +13,7 @@ class Activo {
         public ?string $foto_path = null,
         public ?string $observaciones = null,
         public ?string $fecha_registro = null,
+        public ?string $fecha_compra = null, // NUEVO CAMPO
         public int $activo_sistema = 1
     ) {}
 }

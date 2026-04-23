@@ -10,6 +10,7 @@ class CreateActivoDTO {
         public readonly float $precio_compra,
         public readonly string $responsable,
         public readonly string $fecha_registro,
+        public readonly ?string $fecha_compra = null, // NUEVO CAMPO
         public readonly ?string $foto_path = null,
         public readonly ?string $observaciones = null
     ) {}
