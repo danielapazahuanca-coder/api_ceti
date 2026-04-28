@@ -4,6 +4,7 @@ namespace App\Repositories;
 use App\Database\Database;
 use App\Models\Prestamo;
 use PDO;
+use Exception;
 
 class PrestamoRepository {
     private PDO $db;
@@ -12,70 +13,67 @@ class PrestamoRepository {
         $this->db = Database::getInstance();
     }
 
-    public function save(Prestamo $prestamo): Prestamo {
-        $sql = "INSERT INTO prestamos (activo_id, cantidad, solicitante, documento_identidad, fecha_prestamo, estado) 
-                VALUES (:activo_id, :cantidad, :solicitante, :documento, :fecha, :estado)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            ':activo_id' => $prestamo->activo_id,
-            ':cantidad'  => $prestamo->cantidad,
-            ':solicitante' => $prestamo->solicitante,
-            ':documento' => $prestamo->documento_identidad,
-            ':fecha'     => $prestamo->fecha_prestamo ?? date('Y-m-d H:i:s'),
-            ':estado'    => 'Prestado'
-        ]);
-        $prestamo->id = (int) $this->db->lastInsertId();
-        return $prestamo;
+    public function save(Prestamo $prestamo, array $items): int {
+        try {
+            $this->db->beginTransaction();
+
+            $sql = "INSERT INTO prestamos (solicitante, documento_identidad, fecha_prestamo, estado) 
+                    VALUES (:solicitante, :documento, :fecha, :estado)";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':solicitante' => $prestamo->solicitante,
+                ':documento' => $prestamo->documento_identidad,
+                ':fecha'     => $prestamo->fecha_prestamo ?? date('Y-m-d H:i:s'),
+                ':estado'    => 'Prestado'
+            ]);
+            
+            $prestamoId = (int) $this->db->lastInsertId();
+
+            $sqlDetalle = "INSERT INTO prestamos_detalles (prestamo_id, activo_id, cantidad) 
+                           VALUES (:p_id, :a_id, :cant)";
+            $stmtDetalle = $this->db->prepare($sqlDetalle);
+
+            foreach ($items as $item) {
+                $stmtDetalle->execute([
+                    ':p_id' => $prestamoId,
+                    ':a_id' => $item['activo_id'],
+                    ':cant' => $item['cantidad']
+                ]);
+            }
+
+            $this->db->commit();
+            return $prestamoId;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     public function findAll(): array {
-        $sql = "SELECT p.*, a.nombre as nombre_activo 
+        $sql = "SELECT p.*, 
+                GROUP_CONCAT(CONCAT(pd.cantidad, 'x ', a.nombre) SEPARATOR ', ') as nombre_activo
                 FROM prestamos p 
-                JOIN activos a ON p.activo_id = a.id 
+                JOIN prestamos_detalles pd ON p.id = pd.prestamo_id
+                JOIN activos a ON pd.activo_id = a.id 
+                GROUP BY p.id
                 ORDER BY p.fecha_prestamo DESC";
-        $stmt = $this->db->query($sql);
-        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        $prestamos = [];
-        foreach ($data as $row) {
-            $prestamos[] = new Prestamo(
-                id: (int)$row['id'],
-                activo_id: (int)$row['activo_id'],
-                cantidad: (int)$row['cantidad'],
-                solicitante: $row['solicitante'],
-                documento_identidad: $row['documento_identidad'],
-                fecha_prestamo: $row['fecha_prestamo'],
-                fecha_entrega_real: $row['fecha_entrega_real'],
-                fecha_devolucion: $row['fecha_devolucion'],
-                estado: $row['estado'],
-                nombre_activo: $row['nombre_activo']
-            );
-        }
-        return $prestamos;
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function findById(int $id): ?Prestamo {
-        $sql = "SELECT p.*, a.nombre as nombre_activo 
+    public function findById(int $id): ?array {
+        $sql = "SELECT p.*, 
+                GROUP_CONCAT(CONCAT(pd.cantidad, 'x ', a.nombre) SEPARATOR ', ') as nombre_activo
                 FROM prestamos p 
-                JOIN activos a ON p.activo_id = a.id 
-                WHERE p.id = :id";
+                JOIN prestamos_detalles pd ON p.id = pd.prestamo_id
+                JOIN activos a ON pd.activo_id = a.id 
+                WHERE p.id = :id
+                GROUP BY p.id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$row) return null;
-
-        return new Prestamo(
-            id: (int)$row['id'],
-            activo_id: (int)$row['activo_id'],
-            cantidad: (int)$row['cantidad'],
-            solicitante: $row['solicitante'],
-            documento_identidad: $row['documento_identidad'],
-            fecha_prestamo: $row['fecha_prestamo'],
-            fecha_entrega_real: $row['fecha_entrega_real'],
-            fecha_devolucion: $row['fecha_devolucion'],
-            estado: $row['estado'],
-            nombre_activo: $row['nombre_activo']
-        );
+        return $row ?: null;
     }
 
     public function updateReturn(int $id): bool {
