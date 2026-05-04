@@ -13,7 +13,22 @@ class ActivoService {
 
     public function registrar(CreateActivoDTO $dto): Activo {
         if ($this->repository->findByCodigo($dto->codigo_activo)) throw new Exception("El Codigo '{$dto->codigo_activo}' ya existe.");
-        $nuevoActivo = new Activo(nombre: $dto->nombre, codigo_activo: $dto->codigo_activo, estado_id: $dto->estado_id, ubicacion: $dto->ubicacion, precio_compra: $dto->precio_compra, responsable: $dto->responsable, fecha_registro: $dto->fecha_registro, foto_path: $dto->foto_path, observaciones: $dto->observaciones, activo_sistema: 1);
+        
+        // CORRECCIÓN: Se añade fecha_compra al crear el objeto Activo
+        $nuevoActivo = new Activo(
+            nombre: $dto->nombre, 
+            codigo_activo: $dto->codigo_activo, 
+            estado_id: $dto->estado_id, 
+            ubicacion: $dto->ubicacion, 
+            precio_compra: $dto->precio_compra, 
+            responsable: $dto->responsable, 
+            fecha_registro: $dto->fecha_registro, 
+            fecha_compra: $dto->fecha_compra, // <--- ESTO FALTABA
+            foto_path: $dto->foto_path, 
+            observaciones: $dto->observaciones, 
+            activo_sistema: 1
+        );
+        
         return $this->repository->save($nuevoActivo);
     }
 
@@ -31,8 +46,10 @@ class ActivoService {
         $activoExistente->ubicacion = $data['ubicacion'] ?? $activoExistente->ubicacion;
         $activoExistente->precio_compra = $data['precio_compra'] ?? $activoExistente->precio_compra;
         $activoExistente->responsable = $data['responsable'] ?? $activoExistente->responsable;
+        // CORRECCIÓN: También permitimos actualizar la fecha de compra
+        $activoExistente->fecha_compra = $data['fecha_compra'] ?? $activoExistente->fecha_compra; 
         $activoExistente->observaciones = $data['observaciones'] ?? $activoExistente->observaciones;
-        $activoExistente->activo_sistema = $data['activo_sistema'] ?? $activoExistente->activo_sistema; // Permite restaurar
+        $activoExistente->activo_sistema = $data['activo_sistema'] ?? $activoExistente->activo_sistema;
 
         return $this->repository->update($activoExistente);
     }
