@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Si el archivo o carpeta solicitado existe físicamente, se abre normalmente
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# Si no existe, se redirige absolutamente todo al index.php de la API
+RewriteRule ^ index.php [L]
